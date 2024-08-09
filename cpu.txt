@@ -1,0 +1,695 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+struct Node
+{
+  int process;
+  int arrival;
+  int burst;
+  int turn;
+  int wait;
+  int complete;
+  int visit;
+  int priority;
+  struct Node *link;
+};
+
+struct Node *temp;
+int i,n;
+
+struct Node *display1(struct Node *head)
+{
+  struct Node *p,*q;
+  int temp1,temp2,temp3,temp4,temp5,temp6;
+  float avg1=0,avg2=0;
+  p=head;
+  while(p!=NULL)
+   {
+     q=p->link;
+      while(q!=NULL)
+       {
+         if(p->process > q->process)
+          {
+            temp1=p->arrival;
+            p->arrival=q->arrival;
+            q->arrival=temp1;
+            
+            temp2=p->burst;
+            p->burst=q->burst;
+            q->burst=temp2;
+            
+            temp3=p->process;
+            p->process=q->process;
+            q->process=temp3;
+            
+            temp4=p->turn;
+            p->turn=q->turn;
+            q->turn=temp4;
+            
+            temp5=p->complete;
+            p->complete=q->complete;
+            q->complete=temp5;
+            
+            temp6=p->wait;
+            p->wait=q->wait;
+            q->wait=temp6;
+          }
+         q=q->link; 
+       }
+     p=p->link;  
+   }
+  p=head; 
+  printf("+---------------------------------------------------------------------------------------+\n");
+  printf("|Process id\t|Arrival time\t|Burst time\t|Complete\t|Turnaround\t|Wait\t|\n");
+  printf("+---------------------------------------------------------------------------------------+\n");
+  while(p!=NULL)
+   {
+     printf("|P%d\t\t|%d\t\t|%d\t\t|%d\t\t|%d\t\t|%d\t|\n",p->process,p->arrival,p->burst,p->complete,p->turn,p->wait);
+     avg1=avg1+p->turn;
+     avg2=avg2+p->wait;
+     p=p->link;
+   } 
+  printf("+---------------------------------------------------------------------------------------+\n"); 
+  printf("Average Turnaround time:%f\n",avg1/n);
+  printf("Average Waiting time:%f\n",avg2/n); 
+}
+
+struct Node *display(struct Node *head)
+{
+  struct Node *a;
+  a=head;
+  printf("+-----------------------------------------------+\n");
+  printf("|Process id\t|Arrival time\t|Burst time\t|\n");
+  printf("+-----------------------------------------------+\n");
+  while(a!=NULL)
+   {
+     printf("|P%d\t\t|%d\t\t|%d\t\t|\n",a->process,a->arrival,a->burst);
+     a=a->link;
+   }
+  printf("+-----------------------------------------------+\n"); 
+}
+
+struct Node *roundrobin(struct Node *shead)
+{
+  struct Node *ahead=NULL,*head=NULL,*p,*q,*a,*b;
+  int sys,temp1,temp2,temp3,s;
+  p=shead;
+  while(p!=NULL)
+   {
+     q=p->link;
+      while(q!=NULL)
+       {
+         if(p->arrival > q->arrival)
+          {
+            temp1=p->arrival;
+            p->arrival=q->arrival;
+            q->arrival=temp1;
+            
+            temp2=p->burst;
+            p->burst=q->burst;
+            q->burst=temp2;
+            
+            temp3=p->process;
+            p->process=q->process;
+            q->process=temp3;
+          }
+         else if(p->arrival==q->arrival)
+          {
+            if(p->burst < q->burst)
+             {
+               temp1=p->arrival;
+               p->arrival=q->arrival;
+               q->arrival=temp1;
+            
+               temp2=p->burst;
+               p->burst=q->burst;
+               q->burst=temp2;
+            
+               temp3=p->process;
+               p->process=q->process;
+               q->process=temp3;
+             }
+          }  
+          
+          q=q->link; 
+       }
+     p=p->link;  
+   }
+  printf("Enter the time slice\n");
+  scanf("%d",&s); 
+  p=shead; 
+  temp=(struct Node*)malloc(sizeof(struct Node));
+  temp->link=NULL;
+  temp->arrival=p->arrival;
+  sys=p->arrival;
+  temp->burst=p->burst;
+  temp->process=p->process;
+  p->visit=1;
+  ahead=temp;
+  a=temp;
+  q=ahead;
+  while(q!=NULL)
+   {
+     if(q->burst > s)
+      {
+         sys=sys+s;
+         q->burst=q->burst-s;
+      }
+     else if(q->burst <= s)
+      {
+         sys=sys+q->burst;
+         temp=(struct Node*)malloc(sizeof(struct Node));
+         temp->link=NULL;
+         temp->arrival=q->arrival;
+         temp->process=q->process;
+         temp->complete=sys;
+         q->burst=0;
+         temp->turn=temp->complete-q->arrival;
+         p=shead;
+         while(p!=NULL)
+          {
+            if(q->process==p->process)
+             {
+               temp->burst=p->burst;
+             }
+            p=p->link; 
+          }
+         temp->wait=temp->turn-temp->burst;
+         if(head==NULL)
+          {
+            head=temp;
+            b=temp;
+          }
+         else
+          {
+            b->link=temp;
+            b=temp;
+          }
+                
+      } 
+       p=shead;
+         while(p!=NULL)
+          {
+            if(sys >= p->arrival && p->visit!=1)
+            { 
+             temp=(struct Node*)malloc(sizeof(struct Node));
+             temp->link=NULL;
+             temp->arrival=p->arrival;
+             temp->burst=p->burst;
+             temp->process=p->process;
+             p->visit=1;
+             a->link=temp;
+             a=temp;
+            } 
+            p=p->link; 
+          }
+         
+         if(q->burst!=0)
+          {
+             temp=(struct Node*)malloc(sizeof(struct Node));
+             temp->link=NULL;
+             temp->arrival=q->arrival;
+             temp->burst=q->burst;
+             temp->process=q->process;
+             a->link=temp;
+             a=temp;
+          }  
+      
+     q=q->link; 
+   }
+  
+   printf("Order of Processes\n");
+   a=ahead;
+   while(a->link!=NULL)
+    {
+      printf("P%d->",a->process);
+      a=a->link;
+    }
+   printf("P%d\n",a->process); 
+  display1(head); 
+ 
+  p=shead;
+  while(p!=NULL)
+   {
+     p->visit=0;
+     p=p->link;
+   }
+  
+}
+
+struct Node *priority(struct Node *rhead)
+{
+  struct Node *head=NULL,*p,*q;
+  int sys,temp1,temp2,temp3,temp4,i=1;
+   p=rhead;
+  while(p!=NULL)
+   {
+     q=p->link;
+      while(q!=NULL)
+       {
+         if(p->priority > q->priority)
+          {
+            temp1=p->arrival;
+            p->arrival=q->arrival;
+            q->arrival=temp1;
+            
+            temp2=p->burst;
+            p->burst=q->burst;
+            q->burst=temp2;
+            
+            temp3=p->process;
+            p->process=q->process;
+            q->process=temp3;
+            
+            temp4=p->priority;
+            p->priority=q->priority;
+            q->priority=temp4;
+          }
+         else if(p->priority==q->priority)
+          {
+            if(p->arrival > q->arrival)
+              {
+                    temp1=p->arrival;
+                    p->arrival=q->arrival;
+                    q->arrival=temp1;
+            
+                    temp2=p->burst;
+                    p->burst=q->burst;
+                    q->burst=temp2;
+            
+                    temp3=p->process;
+                    p->process=q->process;
+                    q->process=temp3;
+            
+                    temp4=p->priority;
+                    p->priority=q->priority;
+                    q->priority=temp4;
+              }
+          } 
+         q=q->link; 
+       }
+     p=p->link;  
+   }
+  p=rhead;
+  q=p->link;
+  while(q!=NULL)
+   {
+     if(p->arrival > q->arrival)
+      {
+        p=q;
+      }
+     q=q->link; 
+   } 
+  temp=(struct Node*)malloc(sizeof(struct Node));
+  temp->process=p->process;
+  temp->arrival=p->arrival;
+  temp->burst=p->burst;
+  temp->complete=p->arrival+p->burst;
+  temp->turn=temp->complete-p->arrival;
+  temp->wait=temp->turn-p->burst;
+  sys=temp->complete;
+  head=temp;
+  q=temp;
+  p->visit=1;
+  p=rhead;
+  while(p!=NULL)
+   {
+     if(sys > p->arrival && p->visit!=1)
+      {
+        temp=(struct Node*)malloc(sizeof(struct Node));
+        temp->link=NULL;
+  	temp->process=p->process;
+  	temp->arrival=p->arrival;
+  	temp->burst=p->burst;
+  	temp->complete=sys+p->burst;
+  	temp->turn=temp->complete-p->arrival;
+  	temp->wait=temp->turn-p->burst;
+  	sys=temp->complete;
+  	q->link=temp;
+        q=temp;
+  	p->visit=1;
+  	p=rhead;
+      }
+     else
+      { 
+       p=p->link;
+      }  
+   }
+   
+     p=head;
+      printf("Order of Processes\n");
+  while(p->link!=NULL)
+   {
+     printf("P%d->",p->process);
+     p=p->link;
+   } 
+  printf("P%d\n",p->process); 
+   
+  display1(head);  
+  
+  p=rhead;
+  while(p!=NULL)
+   {
+     p->visit=0;
+     p=p->link;
+   }
+   
+}
+
+struct Node *shortjob(struct Node *qhead)
+{
+  struct Node *head=NULL,*p,*q;
+  int sys,temp1,temp2,temp3;
+  p=qhead;
+  while(p!=NULL)
+   {
+     q=p->link;
+      while(q!=NULL)
+       {
+         if(p->burst > q->burst)
+          {
+            temp1=p->arrival;
+            p->arrival=q->arrival;
+            q->arrival=temp1;
+            
+            temp2=p->burst;
+            p->burst=q->burst;
+            q->burst=temp2;
+            
+            temp3=p->process;
+            p->process=q->process;
+            q->process=temp3;
+          }
+         q=q->link; 
+       }
+     p=p->link;  
+   }
+  p=qhead;
+  q=p->link;
+  while(q!=NULL)
+   {
+     if(p->arrival > q->arrival)
+      {
+        p=q;
+      }
+     q=q->link; 
+   } 
+  temp=(struct Node*)malloc(sizeof(struct Node));
+  temp->process=p->process;
+  temp->arrival=p->arrival;
+  temp->burst=p->burst;
+  temp->complete=p->arrival+p->burst;
+  temp->turn=temp->complete-p->arrival;
+  temp->wait=temp->turn-p->burst;
+  sys=temp->complete;
+  head=temp;
+  q=temp;
+  p->visit=1;
+  p=qhead;
+  while(p!=NULL)
+   {
+     if(sys > p->arrival && p->visit!=1)
+      {
+        temp=(struct Node*)malloc(sizeof(struct Node));
+        temp->link=NULL;
+  	temp->process=p->process;
+  	temp->arrival=p->arrival;
+  	temp->burst=p->burst;
+  	temp->complete=sys+p->burst;
+  	temp->turn=temp->complete-p->arrival;
+  	temp->wait=temp->turn-p->burst;
+  	sys=temp->complete;
+  	q->link=temp;
+        q=temp;
+  	p->visit=1;
+  	p=qhead;
+      }
+     else
+      { 
+       p=p->link;
+      }  
+   }
+   
+     p=head;
+      printf("Order of Processes\n");
+  while(p->link!=NULL)
+   {
+     printf("P%d->",p->process);
+     p=p->link;
+   } 
+  printf("P%d\n",p->process); 
+   
+  display1(head); 
+  
+  p=qhead;
+  while(p!=NULL)
+   {
+     p->visit=0;
+     p=p->link;
+   }
+}
+
+struct Node *first(struct Node *phead)
+{
+  struct Node *head=NULL,*p,*q;
+  int sys,temp1,temp2,temp3;
+  p=phead;
+  while(p!=NULL)
+   {
+     q=p->link;
+      while(q!=NULL)
+       {
+         if(p->arrival > q->arrival)
+          {
+            temp1=p->arrival;
+            p->arrival=q->arrival;
+            q->arrival=temp1;
+            
+            temp2=p->burst;
+            p->burst=q->burst;
+            q->burst=temp2;
+            
+            temp3=p->process;
+            p->process=q->process;
+            q->process=temp3;
+          }
+         else if(p->arrival==q->arrival)
+          {
+            if(p->burst < q->burst)
+             {
+               temp1=p->arrival;
+               p->arrival=q->arrival;
+               q->arrival=temp1;
+            
+               temp2=p->burst;
+               p->burst=q->burst;
+               q->burst=temp2;
+            
+               temp3=p->process;
+               p->process=q->process;
+               q->process=temp3;
+             }
+          } 
+         q=q->link; 
+       }
+     p=p->link;  
+   }
+  p=phead; 
+  temp=(struct Node*)malloc(sizeof(struct Node));
+  temp->link=NULL;
+  temp->arrival=p->arrival;
+  temp->burst=p->burst;
+  temp->process=p->process;
+  temp->complete=p->arrival+p->burst;
+  temp->turn=temp->complete-p->arrival;
+  temp->wait=temp->turn-p->burst;
+  sys=temp->complete;
+  head=temp;
+  q=temp;
+  p=p->link;
+  while(p!=NULL)
+   {
+        temp=(struct Node*)malloc(sizeof(struct Node));
+  	temp->link=NULL;
+     if(sys < p->arrival)
+      {
+  	temp->arrival=p->arrival;
+  	temp->burst=p->burst;
+  	temp->process=p->process;
+  	temp->complete=p->arrival+p->burst;
+  	temp->turn=temp->complete-p->arrival;
+  	temp->wait=temp->turn-p->burst;
+  	sys=temp->complete;
+  	q->link=temp;
+  	q=temp;
+      }
+     else
+      {
+  	 temp->arrival=p->arrival;
+  	 temp->burst=p->burst;
+  	 temp->process=p->process;
+  	 temp->complete=sys+p->burst;
+  	 temp->turn=temp->complete-p->arrival;
+  	 temp->wait=temp->turn-p->burst;
+  	 sys=temp->complete;
+  	 q->link=temp;
+  	 q=temp;
+      } 
+     p=p->link; 
+   }
+  p=head;
+  printf("Order of Processes\n");
+  while(p->link!=NULL)
+   {
+     printf("P%d->",p->process);
+     p=p->link;
+   } 
+  printf("P%d\n",p->process); 
+  display1(head);
+}
+
+void read3()
+{
+  struct Node *r,*temp3,*rhead=NULL;
+  printf("Enter the number of processes\n");
+  scanf("%d",&n);
+  printf("Enter the arrival,burst time,Priority\n");
+  for(i=0;i<n;i++)
+   {
+     printf("Process P%d:",i+1);
+     temp3=(struct Node*)malloc(sizeof(struct Node));
+     temp3->visit=0;
+     temp3->process=i+1;
+     scanf("%d%d%d",&temp3->arrival,&temp3->burst,&temp3->priority);
+     temp3->link=NULL;
+     if(rhead==NULL)
+      {
+        rhead=temp3;
+        r=temp3;
+      }
+     else
+      {
+        r->link=temp3;
+        r=temp3;
+      }     
+   }
+   priority(rhead);
+}
+
+void read2()
+{
+  struct Node *q,*temp2,*qhead=NULL;
+  printf("Enter the number of processes\n");
+  scanf("%d",&n);
+  printf("Enter the arrival,burst time\n");
+  for(i=0;i<n;i++)
+   {
+     printf("Process P%d:",i+1);
+     temp2=(struct Node*)malloc(sizeof(struct Node));
+     temp2->visit=0;
+     temp2->process=i+1;
+     scanf("%d%d",&temp2->arrival,&temp2->burst);
+     temp2->link=NULL;
+     if(qhead==NULL)
+      {
+        qhead=temp2;
+        q=temp2;
+      }
+     else
+      {
+        q->link=temp2;
+        q=temp2;
+      }     
+   }
+   
+   display(qhead);
+   shortjob(qhead); 
+}
+
+void read1()
+{
+  struct Node *p,*temp1,*phead=NULL;
+  printf("Enter the number of processes\n");
+  scanf("%d",&n);
+  printf("Enter the arrival,burst time\n");
+  for(i=0;i<n;i++)
+   {
+     printf("Process P%d:",i+1);
+     temp1=(struct Node*)malloc(sizeof(struct Node));
+     temp1->process=i+1;
+     scanf("%d%d",&temp1->arrival,&temp1->burst);
+     temp1->link=NULL;
+     if(phead==NULL)
+      {
+        phead=temp1;
+        p=temp1;
+      }
+     else
+      {
+        p->link=temp1;
+        p=temp1;
+      }     
+   }
+   
+   display(phead);
+   first(phead); 
+}
+
+void read4()
+{
+  
+  struct Node *s,*temp4,*shead=NULL;
+  printf("Enter the number of processes\n");
+  scanf("%d",&n);
+  printf("Enter the arrival,burst time\n");
+  for(i=0;i<n;i++)
+   {
+     printf("Process P%d:",i+1);
+     temp4=(struct Node*)malloc(sizeof(struct Node));
+     temp4->visit=0;
+     temp4->process=i+1;
+     scanf("%d%d",&temp4->arrival,&temp4->burst);
+     temp4->link=NULL;
+     if(shead==NULL)
+      {
+        shead=temp4;
+        s=temp4;
+      }
+     else
+      {
+        s->link=temp4;
+        s=temp4;
+      }     
+   }
+   
+   display(shead);
+   roundrobin(shead); 
+}
+
+int main()
+{
+  int ch;
+  while(1)
+   {
+     printf("1.FCFS\n2.SJF\n3.Priority\n4.Roundrobin\n5.Exit\nEnter your Choice\n");
+     scanf("%d",&ch);
+     switch(ch)
+      {
+        case 1:read1();
+               break;
+        case 2:read2();
+               break;
+        case 3:read3();
+               break;
+        case 4:read4();
+               break;
+        case 5:exit(0);
+               break;       
+        default:printf("Wrong Option\n");                                           
+           
+      }
+   }
+
+  return 0;
+}
+
